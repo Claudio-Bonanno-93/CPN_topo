@@ -1,0 +1,154 @@
+__________________________________________________________________________________________________________________________________
+|________________________________________________________________________________________________________________________________|
+||                                                                                                                              ||
+||                                                                                                                              ||
+||      ,o888888o.    8 888888888o   b.             8      8888888 8888888888 ,o888888o.     8 888888888o       ,o888888o.      ||
+||     8888     `88.  8 8888    `88. 888o.          8            8 8888    . 8888     `88.   8 8888    `88.  . 8888     `88.    ||
+||  ,8 8888       `8. 8 8888     `88 Y88888o.       8            8 8888   ,8 8888       `8b  8 8888     `88 ,8 8888       `8b   ||
+||  88 8888           8 8888     ,88 .`Y888888o.    8            8 8888   88 8888        `8b 8 8888     ,88 88 8888        `8b  ||
+||  88 8888           8 8888.   ,88' 8o. `Y888888o. 8            8 8888   88 8888         88 8 8888.   ,88' 88 8888         88  ||
+||  88 8888           8 888888888P'  8`Y8o. `Y88888o8            8 8888   88 8888         88 8 888888888P'  88 8888         88  ||
+||  88 8888           8 8888         8   `Y8o. `Y8888            8 8888   88 8888        ,8P 8 8888         88 8888        ,8P  ||
+||  `8 8888       .8' 8 8888         8      `Y8o. `Y8            8 8888   `8 8888       ,8P  8 8888         `8 8888       ,8P   ||
+||     8888     ,88'  8 8888         8         `Y8o.`            8 8888    ` 8888     ,88'   8 8888          ` 8888     ,88'    ||
+||      `8888888P'    8 8888         8            `Yo            8 8888       `8888888P'     8 8888             `8888888P'      ||
+||                                                                                                                              ||
+||______________________________________________________________________________________________________________________________||
+|________________________________________________________________________________________________________________________________|
+
+
+************************ Authors ************************
+
+Author and main contributor: Claudio Bonanno (bug report to: claudiobonanno93@gmail.com)
+Other contributors: Mario Berni, Francesca Margari, Davide Vadacchino
+
+
+************************ Package Description ************************
+
+CPN_topo is a C package to simulate 2d CP^{N-1} models on the lattice and study their topological properties.
+
+REQUIRED BASH TOOLS: automake (needed to build the code)
+REQUIRED C LIBRARIES: stdio.h, stdlib.h, time.h, math.h, complex.h, string.h, float.h (without these libs, code won't compile)
+OPTIONAL C LIBRARIES: openssl/md5.h (if openssl/md5.h is not found, no conf hash is computed, but code still compiles and works)
+
+
+To build the code, run, in the main directory:
+
+aclocal
+autoconf
+autoheader
+automake --add-missing --foreign
+
+To compile the code, run, in the main directory:
+
+./configure <optional-flags>
+make <target_exec>
+
+where <target_exec> is the particular src file to be compiled.
+
+Note that the value of N = <N> is chosen at COMPILE time through the macro 
+
+#define N <N>
+
+which has to be changed in include/macro.h
+
+
+Useful script are provided in the main directory to automatize the building and compilation processes.
+
+To build the code simply run
+
+./script_build_code.sh
+
+while the compilation is achieved running
+
+./script_compilation.sh <N> <target_exec>
+
+where <N> is the number of colors N of CP^{N-1} models and <target_exec> is the particular src file to be compiled.
+If <target_exec> is not specified, all src files will be compiled.
+
+Then, each exec is simply run through
+
+./target_exec input_file
+
+Running without any input provides instead detailed compilation info.
+
+Source files (src sub-directory):
+
+- cpn.c : parallel tempering simulation of 2d CP^{N-1} models with non-zero imaginary theta (run with 1 replica for standard simulations)
+- multicanonic_cpn.c : parallel tempering simulation of 2d CP^{N-1} models with non-zero imaginary theta and multicanonic topo-potential
+- cpn_conf_check.c : check if a CPN conf is corrupted (note that this tool requires the openssl/md5.h header)
+
+Library files (lib sub-directory):
+
+- cpn_cmplx_op.c : operations and useful functions involving CPN fields and complex numbers
+- cpn_conf_def.c : writing/reading/defining the CPN configuration
+- cpn_meas.c : define observables to be measured during the simulation
+- cpn_param.c : defines theory and simulation parameters
+- cpn_update.c : defines the updates to generate the Monte Carlo Markov chain
+- cpn_update_multicanonic.c : defines the multicanonic update
+- endianness.c : defines endianness and changes binary writing/reading of double numbers accordingly
+- geometry.c : defines various types of geometry used in the code
+- rng.c : defines rng and related functions
+
+Header files (include sub-directory):
+
+macro.h : defines various useful macros, among which the value of N (number of matter field components)
+
+cpn_cmplx_op.h : contains function prototypes defined in cpn_cmplx_op.c
+cpn_conf.h : contains function prototypes defined in cpn_conf_def.c, cpn_meas.c and cpn_update.c and conf struct
+cpn_multicanonic.h : contains function prototypes defined in cpn_update_multicanonic.c
+cpn_param.h : contains function prototypes defined in cpn_param.c and theory/simulation param struct
+endianness.h : contains function prototypes defined in endianness.c
+geometry.h : contains function prototypes defined in geometry.c and geometry struct
+rng.h : contains function prototypes defined in rng.c and rng param struct
+
+************************ Lattice Action ************************
+
+Lattice action is the tree-level Symanzik-improved action S_Symanzik, with the possibility of adding an imaginary-theta term (S_theta)
+and a bias topological potential when performing multicanonic simulations (S_multicanonic):
+
+- S_Symanzik = -2 N beta sum_{x, mu} [ c1 Re{ U*_mu(x) z*(x+mu) z(x) } + c2 Re{ U*_mu(x+mu) U*_mu(x) z*(x+2mu) z(x) } - (c1 + c2) ]
+
+  (here c1=4/3 and c2=-1/12 are improvement coefficients). Here, z is an N-component complex scalar fields satisyfing z*(x) z(x) = 1, while U_mu(x) is a complex phase. 
+
+- S_theta = - theta Q_plaq          (see Topological Charge section for the definition of Q_plaq)
+
+- S_multicanonic = - V(Q_plaq)      (the function V(x) is read from file and defined on a grid)
+
+
+************************ Update Algorithm ************************
+
+CPN_topo implements the Hasenbusch parallel tempering algorithm to sample the path integral. For standard simulations just use 1 replica.
+
+Each replica is updated through standard over-relaxation and over-heat-bath updates. Swaps of configurations between two replicas is done through a Metropolis step.
+
+In the presence of a multicanonic topological potential, the candidate link U_mu(x) is extracted using standard simulations
+and accepted through a Metropolis step with probability p = exp( - delta V ).
+
+Field configurations are updated through lattice sweeps when performing simulations with no topological potential.
+When performing simulations with topological potential, the field to be updated, the site (or link) to be updated and the type of updated are drawn stochastically.
+
+
+************************ Topological Charge Density ************************
+
+Three different discretizations of the continuum topological charge density q = (1/(4 pi)) epsilon_{mu nu} F_{mu nu} are implemented in CPN_topo.
+
+In the following the plaquette is denoted as Pi_{mu nu}(x) = U_mu(x) U_nu(x+mu) U*_mu(x+nu) U*_nu(x)
+
+- q_plaq = (1/(2 pi)) Im{ Pi_{01}(x) }      (non-geometric definition, Q = sum_{x} q(x) it is not integer valued)
+
+- q_U = (1/(2 pi)) Im{ log[ Pi_{01}(x) ] }      (geometric definition, Q is always integer valued)
+
+- q_z = (1/(2 pi)) Im{ log[ Tr{ P(x+0+1) P(x+0) P(x) } ] + log[ Tr{ P(x+1) P(x+0+1) P(x) } ] }      (geometric definition, Q is always integer valued)
+
+  where P(x)_{ij} = z(x)_i z*(x)_j is a mesonic operator build through the z fields
+
+The action always features the non-geometric charge Q_plaq without smoothing.
+Topological observables are instead measured before and after smoothing.
+CPN_topo implements cooling as smoothing method.
+
+
+************************ Input File Conventions ************************ 
+
+A template input file is present in the CPN_topo-v* main directory. Everything following # (up to carriage return) in the input file is
+interpreted as a comment. Note that the time direction has index 0 while the space direction has index 1.
